@@ -117,52 +117,52 @@ class EmailClassificationPipeline:
         text_columns: List[str] = ["Ticket Summary", "Interaction content"]
     ) -> Dict[str, Any]:
         """
-        Uruchamia pełny pipeline klasyfikacji
-        
-        Args:
-            data_path: Ścieżka do danych CSV
-            target_column: Kolumna docelowa
-            text_columns: Kolumny tekstowe do przetwarzania
+    Run full classification pipeline
+    
+    Args:
+            data_path: Path to CSV data
+            target_column: Target column
+            text_columns: Text columns to process
             
         Returns:
-            Dict z wynikami pipeline'u
+            Dict with pipeline results
         """
         
         start_time = time.time()
-        logging.info("Rozpoczynanie pełnego pipeline'u klasyfikacji emaili")
+        logging.info("Starting full email classification pipeline")
         
         try:
-            # Krok 1: Selekcja danych
+            # Step 1: Data selection
             self.data = self._step_data_selection(data_path, target_column)
             
-            # Krok 2: Tłumaczenie (opcjonalne)
+            # Step 2: Translation (optional)
             if self.config["translation"]["enable"]:
                 self.data = self._step_translation(text_columns)
             
-            # Krok 3: Preprocessing
+            # Step 3: Preprocessing
             self.data = self._step_preprocessing(text_columns)
             
-            # Krok 4: Strukturyzacja danych
+            # Step 4: Data structuring
             self.data = self._step_data_structuring(target_column)
             
-            # Krok 5: Wektoryzacja
+            # Step 5: Vectorization
             self.X = self._step_vectorization(text_columns)
             self.y = self.data[target_column]
             
-            # Krok 6: Próbkowanie (opcjonalne)
+            # Step 6: Sampling (optional)
             if self.config["sampling"]["enable"]:
                 self.X, self.y = self._step_sampling()
             
-            # Krok 7: Selekcja strategii
+            # Step 7: Strategy selection
             strategy = self._step_strategy_selection()
             
-            # Krok 8: Podział danych
+            # Step 8: Data split
             X_train, X_test, y_train, y_test = self._step_data_split()
             
-            # Krok 9: Modelowanie i ewaluacja
+            # Step 9: Modeling and evaluation
             modeling_results = self._step_modeling(X_train, X_test, y_train, y_test)
             
-            # Podsumowanie
+            # Summary
             total_time = time.time() - start_time
             self.results = {
                 'pipeline_time': total_time,
@@ -173,23 +173,23 @@ class EmailClassificationPipeline:
                 'config': self.config
             }
             
-            logging.info(f"Pipeline zakończony pomyślnie w {total_time:.2f} sekund")
+            logging.info(f"Pipeline completed successfully in {total_time:.2f} seconds")
             return self.results
             
         except Exception as e:
-            logging.error(f"Błąd w pipeline: {e}")
+            logging.error(f"Error in pipeline: {e}")
             raise
     
     def _step_data_selection(self, data_path: str, target_column: str) -> pd.DataFrame:
-        """Krok 1: Selekcja danych"""
-        logging.info("Krok 1: Selekcja danych")
+        """Step 1: Data selection"""
+        logging.info("Step 1: Data selection")
         
         self.data_selector = DataSelector(data_path)
         df, metadata = self.data_selector.process_data(
             filter_frequency=self.config["data_selection"]["filter_frequency"]
         )
         
-        logging.info(f"Załadowano dane: {metadata['shape']}")
+        logging.info(f"Loaded data: {metadata['shape']}")
         return df
     
     def _step_translation(self, text_columns: List[str]) -> pd.DataFrame:
@@ -213,12 +213,12 @@ class EmailClassificationPipeline:
         return self.data
     
     def _step_preprocessing(self, text_columns: List[str]) -> pd.DataFrame:
-        """Krok 3: Preprocessing"""
-        logging.info("Krok 3: Czyszczenie tekstu")
+        """Step 3: Preprocessing"""
+        logging.info("Step 3: Text cleaning")
         
         self.preprocessor = TextPreprocessor()
         
-        # Mapowanie kolumn
+        # Column mapping
         summary_col = text_columns[0] if len(text_columns) > 0 else "Ticket Summary"
         interaction_col = text_columns[1] if len(text_columns) > 1 else "Interaction content"
         
@@ -229,12 +229,12 @@ class EmailClassificationPipeline:
         return self.data
     
     def _step_data_structuring(self, target_column: str) -> pd.DataFrame:
-        """Krok 4: Strukturyzacja danych"""
-        logging.info("Krok 4: Strukturyzacja danych")
+        """Step 4: Data structuring"""
+        logging.info("Step 4: Data structuring")
         
         self.structurer = DataStructurer()
         
-        # Kodowanie etykiet
+        # Label encoding
         label_columns = [target_column]
         if 'y1' in self.data.columns:
             label_columns.append('y1')
@@ -246,12 +246,12 @@ class EmailClassificationPipeline:
         return self.data
     
     def _step_vectorization(self, text_columns: List[str]) -> np.ndarray:
-        """Krok 5: Wektoryzacja"""
-        logging.info("Krok 5: Wektoryzacja tekstu")
+        """Step 5: Vectorization"""
+        logging.info("Step 5: Text vectorization")
         
         self.vectorizer = Vectorizer()
         
-        # Przygotuj kolumny tekstowe
+        # Prepare text columns
         clean_columns = []
         for col in text_columns:
             clean_col = f"{'ts' if 'Summary' in col else 'ic'}"
@@ -259,9 +259,9 @@ class EmailClassificationPipeline:
                 clean_columns.append(clean_col)
         
         if not clean_columns:
-            raise ValueError("Brak oczyszczonych kolumn tekstowych")
+            raise ValueError("No clean text columns available")
         
-        # Konfiguracje wektoryzacji
+        # Vectorization configurations
         vectorizer_configs = {}
         for col in clean_columns:
             vectorizer_configs[col] = {
@@ -274,18 +274,18 @@ class EmailClassificationPipeline:
             self.data, clean_columns, vectorizer_configs
         )
         
-        logging.info(f"Zwektoryzowano cechy: kształt {X.shape}")
+        logging.info(f"Vectorized features: shape {X.shape}")
         return X
     
     def _step_sampling(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Krok 6: Próbkowanie"""
-        logging.info("Krok 6: Balansowanie danych")
+        """Step 6: Sampling"""
+        logging.info("Step 6: Data balancing")
         
         self.sampler = Sampler(random_state=self.random_state)
         
-        # Analiza niezbalansowania
+        # Imbalance analysis
         analysis = self.sampler.analyze_imbalance(self.y)
-        logging.info(f"Analiza niezbalansowania: ratio={analysis['imbalance_ratio']:.2f}")
+        logging.info(f"Imbalance analysis: ratio={analysis['imbalance_ratio']:.2f}")
         
         if not analysis['is_balanced']:
             method = self.config["sampling"]["method"]
@@ -296,27 +296,27 @@ class EmailClassificationPipeline:
                     max_ratio=self.config["sampling"]["max_ratio"]
                 )
             else:
-                # Implementacja innych metod
+                # Implementation of other methods
                 X_resampled, y_resampled = self.sampler.smote_oversample(self.X, self.y)
             
-            logging.info(f"Zbalansowano dane: {len(self.X)} -> {len(X_resampled)}")
+            logging.info(f"Data balanced: {len(self.X)} -> {len(X_resampled)}")
             return X_resampled, y_resampled
         
         return self.X, self.y
     
     def _step_strategy_selection(self) -> Dict[str, Any]:
-        """Krok 7: Selekcja strategii"""
-        logging.info("Krok 7: Analiza strategii uczenia")
+        """Step 7: Strategy selection"""
+        logging.info("Step 7: Learning strategy analysis")
         
         self.strategy_selector = StrategySelector(random_state=self.random_state)
         strategy = self.strategy_selector.recommend_strategy(self.X, self.y)
         
-        logging.info(f"Rekomendowana strategia: {strategy['primary_strategy']}")
+        logging.info(f"Recommended strategy: {strategy['primary_strategy']}")
         return strategy
     
     def _step_data_split(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """Krok 8: Podział danych"""
-        logging.info("Krok 8: Podział danych na zbiór treningowy i testowy")
+        """Step 8: Data split"""
+        logging.info("Step 8: Splitting data into training and test sets")
         
         self.data_splitter = DataSplitter(random_state=self.random_state)
         
@@ -336,7 +336,7 @@ class EmailClassificationPipeline:
                 stratify=self.config["data_split"]["stratify"]
             )
         
-        logging.info(f"Podział danych: {len(X_train)} treningowych, {len(X_test)} testowych")
+        logging.info(f"Data split: {len(X_train)} training, {len(X_test)} test")
         return X_train, X_test, y_train, y_test
     
     def _step_modeling(
@@ -346,39 +346,39 @@ class EmailClassificationPipeline:
         y_train: np.ndarray, 
         y_test: np.ndarray
     ) -> Dict[str, Any]:
-        """Krok 9: Modelowanie i ewaluacja"""
-        logging.info("Krok 9: Trenowanie i ewaluacja modeli")
+        """Step 9: Modeling and evaluation"""
+        logging.info("Step 9: Model training and evaluation")
         
         self.model_trainer = ModelTrainer(random_state=self.random_state)
         self.model_evaluator = ModelEvaluator()
         
-        # Trenuj modele
+        # Train models
         models_to_train = self.config["modeling"]["models"]
         training_results = self.model_trainer.train_multiple_models(
             X_train, y_train, models_to_train, X_test, y_test
         )
         
-        # Ewaluacja modeli
+        # Model evaluation
         evaluation_results = {}
         
         for model_name, result in training_results.items():
             if 'error' not in result:
-                # Predykcje
+                # Predictions
                 y_pred = result['model'].predict(X_test)
                 
-                # Prawdopodobieństwa (jeśli dostępne)
+                # Probabilities (if available)
                 y_proba = None
                 if hasattr(result['model'], 'predict_proba'):
                     y_proba = result['model'].predict_proba(X_test)
                 
-                # Ewaluacja
+                # Evaluation
                 eval_result = self.model_evaluator.evaluate_classification(
                     y_test, y_pred, y_proba, model_name=model_name
                 )
                 
                 evaluation_results[model_name] = eval_result
         
-        # Porównanie modeli
+        # Model comparison
         model_comparison = self.model_evaluator.compare_models()
         best_model, best_score = self.model_evaluator.get_best_model()
         
@@ -390,7 +390,7 @@ class EmailClassificationPipeline:
             'best_score': best_score
         }
         
-        logging.info(f"Najlepszy model: {best_model} (score: {best_score:.4f})")
+        logging.info(f"Best model: {best_model} (score: {best_score:.4f})")
         return modeling_results
     
     def predict(
@@ -398,27 +398,27 @@ class EmailClassificationPipeline:
         new_data: Union[pd.DataFrame, List[str]], 
         model_name: Optional[str] = None
     ) -> np.ndarray:
-        """Predykcje na nowych danych"""
+        """Predictions on new data"""
         
         if self.model_trainer is None:
-            raise ValueError("Pipeline nie został wytrenowany")
+            raise ValueError("Pipeline has not been trained")
         
-        # Przygotuj dane
+        # Prepare data
         if isinstance(new_data, list):
-            # Konwertuj listę tekstów na DataFrame
+            # Convert list of texts to DataFrame
             df = pd.DataFrame({'text': new_data})
-            # Tutaj powinno być pełne przetwarzanie...
-            # Uproszczenie - zakładamy że dane są już przetworzone
+            # Here should be full processing...
+            # Simplification - assuming data is already processed
             X_processed = self.vectorizer.transform_text(new_data)
         else:
-            # DataFrame - przetwórz kolumny tekstowe
-            # Uproszczenie implementacji
+            # DataFrame - process text columns
+            # Simplified implementation
             pass
         
         return self.model_trainer.predict(X_processed, model_name)
     
     def save_pipeline(self, filepath: str) -> None:
-        """Zapisuje pipeline"""
+        """Save pipeline"""
         import joblib
         
         pipeline_data = {
@@ -436,10 +436,10 @@ class EmailClassificationPipeline:
         }
         
         joblib.dump(pipeline_data, filepath)
-        logging.info(f"Pipeline zapisany w {filepath}")
+        logging.info(f"Pipeline saved to {filepath}")
     
     def load_pipeline(self, filepath: str) -> None:
-        """Ładuje pipeline"""
+        """Load pipeline"""
         import joblib
         
         pipeline_data = joblib.load(filepath)
@@ -456,14 +456,14 @@ class EmailClassificationPipeline:
         self.model_evaluator = pipeline_data['model_evaluator']
         self.results = pipeline_data['results']
         
-        logging.info(f"Pipeline załadowany z {filepath}")
+        logging.info(f"Pipeline loaded from {filepath}")
 
 
 if __name__ == "__main__":
-    # Przykład użycia
+    # Usage example
     pipeline = EmailClassificationPipeline()
     
-    # Uruchom pipeline (zakładając że plik danych istnieje)
+    # Run pipeline (assuming data file exists)
     try:
         # Get absolute path to data file
         data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "AppGallery.csv")
@@ -473,6 +473,6 @@ if __name__ == "__main__":
         print(f"Najlepszy score: {results['modeling_results']['best_score']:.4f}")
         
     except FileNotFoundError:
-        print("Plik AppGallery.csv nie został znaleziony. Uruchom pipeline z odpowiednim plikiem danych.")
+        print("File AppGallery.csv not found. Run pipeline with appropriate data file.")
     except Exception as e:
-        print(f"Błąd: {e}")
+        print(f"Error: {e}")

@@ -46,7 +46,7 @@ class DataSplitter:
             'test_class_distribution': self._get_class_distribution(y_test)
         }
         
-        logging.info(f"Podział podstawowy: {len(X_train)} treningowych, {len(X_test)} testowych")
+        logging.info(f"Basic split: {len(X_train)} training, {len(X_test)} test")
         
         return X_train, X_test, y_train, y_test
     

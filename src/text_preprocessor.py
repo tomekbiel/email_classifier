@@ -16,7 +16,7 @@ class TextPreprocessor:
         """Initialize noise patterns"""
         return {
             'email_headers': [
-                "(from :)|(subject :)|(sent :)|(r\s*:)|(re\s*:)"
+                r"(from :)|(subject :)|(sent :)|(r\s*:)|(re\s*:)"
             ],
             'months': [
                 "(january|february|march|april|may|june|july|august|september|october|november|december)",
@@ -26,10 +26,10 @@ class TextPreprocessor:
                 "(monday|tuesday|wednesday|thursday|friday|saturday|sunday)"
             ],
             'times': [
-                "\d{2}(:|.)\d{2}"
+                r"\d{2}(:|.)\d{2}"
             ],
             'emails': [
-                "(xxxxx@xxxx\.com)|(\*{5}\([a-z]+\))"
+                r"(xxxxx@xxxx\.com)|(\*{5}\([a-z]+\))"
             ],
             'greetings': [
                 "dear ((customer)|(user))",
@@ -71,16 +71,16 @@ class TextPreprocessor:
                 "canada, australia, new zealand and other countries"
             ],
             'numbers': [
-                "\d+"
+                r"\d+"
             ],
             'special_chars': [
                 "[^0-9a-zA-Z]+"
             ],
             'single_chars': [
-                "(\s|^).(\s|$)"
+                r"(\s|^).(\s|$)"
             ],
             'ticket_noise': [
-                "(sv\s*:)|(wg\s*:)|(ynt\s*:)|(fw(d)?\s*:)|(r\s*:)|(re\s*:)|(\[|\])|(aspiegel support issue submit)|(null)|(nan)|((bonus place my )?support.pt 自动回复:)"
+                r"(sv\s*:)|(wg\s*:)|(ynt\s*:)|(fw(d)?\s*:)|(r\s*:)|(re\s*:)|(\[|\])|(aspiegel support issue submit)|(null)|(nan)|((bonus place my )?support.pt 自动回复:)"
             ]
         }
     
@@ -134,39 +134,39 @@ class TextPreprocessor:
         clean_summary_col: str = "ts",
         clean_interaction_col: str = "ic"
     ) -> pd.DataFrame:
-        """Przetwarza DataFrame z czyszczeniem tekstu"""
+        """Process DataFrame with text cleaning"""
         
-        logging.info(f"Rozpoczynanie preprocessingu danych...")
+        logging.info(f"Starting data preprocessing...")
         
-        # Czyść podsumowanie ticketu
-        logging.info(f"Czyszczenie kolumny: {summary_col}")
+        # Clean ticket summary
+        logging.info(f"Cleaning column: {summary_col}")
         df[clean_summary_col] = df[summary_col].apply(self.clean_ticket_summary)
         
-        # Czyść treść interakcji
-        logging.info(f"Czyszczenie kolumny: {interaction_col}")
+        # Clean interaction content
+        logging.info(f"Cleaning column: {interaction_col}")
         df[clean_interaction_col] = df[interaction_col].apply(self.clean_interaction_content)
         
-        # Usuń wiersze z pustymi tekstami po czyszczeniu
+        # Remove rows with empty texts after cleaning
         initial_shape = df.shape[0]
         df = df[(df[clean_summary_col] != "") & (df[clean_interaction_col] != "")]
         final_shape = df.shape[0]
         
-        logging.info(f"Usunięto {initial_shape - final_shape} wierszy z pustymi tekstami")
-        logging.info(f"Preprocessing zakończony. Kształt danych: {df.shape}")
+        logging.info(f"Removed {initial_shape - final_shape} rows with empty texts")
+        logging.info(f"Preprocessing completed. Data shape: {df.shape}")
         
         return df
     
     def add_custom_pattern(self, category: str, pattern: str) -> None:
-        """Dodaje niestandardowy wzorzec szumu"""
+        """Add custom noise pattern"""
         if category not in self.noise_patterns:
             self.noise_patterns[category] = []
         self.noise_patterns[category].append(pattern)
-        logging.info(f"Dodano wzorzec '{pattern}' do kategorii '{category}'")
+        logging.info(f"Added pattern '{pattern}' to category '{category}'")
     
     def get_text_statistics(self, df: pd.DataFrame, text_column: str) -> Dict[str, Any]:
-        """Zwraca statystyki tekstu"""
+        """Returns text statistics"""
         if text_column not in df.columns:
-            raise ValueError(f"Kolumna '{text_column}' nie istnieje w DataFrame")
+            raise ValueError(f"Column '{text_column}' does not exist in DataFrame")
         
         texts = df[text_column].dropna()
         

@@ -178,18 +178,18 @@ class ModelTrainer:
             
             self.training_history[model_name] = training_info
             
-            # Zaktualizuj najlepszy model
+            # Update best model
             score = val_results.get('val_accuracy', train_accuracy)
             if score > self.best_score:
                 self.best_score = score
                 self.best_model = model
             
-            logging.info(f"Model {model_name} wytrenowany pomyślnie. Czas: {training_time:.2f}s, Dokładność: {train_accuracy:.4f}")
+            logging.info(f"Model {model_name} trained successfully. Time: {training_time:.2f}s, Accuracy: {train_accuracy:.4f}")
             
             return training_info
             
         except Exception as e:
-            logging.error(f"Błąd podczas treningu modelu {model_name}: {e}")
+            logging.error(f"Error during model training {model_name}: {e}")
             raise
     
     def train_multiple_models(

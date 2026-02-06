@@ -371,15 +371,15 @@ class ModelEvaluator:
         if save_path:
             with open(save_path, 'w', encoding='utf-8') as f:
                 f.write(report)
-            logging.info(f"Raport zapisany w {save_path}")
+            logging.info(f"Report saved to {save_path}")
         
         return report
     
     def get_best_model(self, metric: str = 'f1_score') -> Tuple[str, float]:
-        """Zwraca najlepszy model według wskazanej metryki"""
+        """Returns best model by specified metric"""
         
         if not self.evaluation_results:
-            raise ValueError("Brak wyników ewaluacji")
+            raise ValueError("No evaluation results available")
         
         best_model = None
         best_score = 0
@@ -391,30 +391,30 @@ class ModelEvaluator:
                 best_model = model_name
         
         if best_model is None:
-            raise ValueError(f"Brak wyników dla metryki {metric}")
+            raise ValueError(f"No results available for metric {metric}")
         
         return best_model, best_score
 
 
 if __name__ == "__main__":
-    # Przykład użycia
+    # Usage example
     from sklearn.datasets import make_classification
     from sklearn.model_selection import train_test_split
     from sklearn.ensemble import RandomForestClassifier
     
-    # Wygeneruj dane
+    # Generate data
     X, y = make_classification(n_samples=1000, n_classes=3, n_features=10, random_state=42)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # Trenuj model
+    # Train model
     model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
     
-    # Predykcje
+    # Predictions
     y_pred = model.predict(X_test)
     y_proba = model.predict_proba(X_test)
     
-    # Ewaluacja
+    # Evaluation
     evaluator = ModelEvaluator()
     results = evaluator.evaluate_classification(
         y_test, y_pred, y_proba, 
@@ -422,10 +422,10 @@ if __name__ == "__main__":
         model_name="random_forest"
     )
     
-    print("Wyniki ewaluacji:")
+    print("Evaluation results:")
     print(f"Accuracy: {results['accuracy']:.4f}")
     print(f"F1-Score: {results['f1_score']:.4f}")
     
-    # Generuj raport
+    # Generate report
     report = evaluator.generate_evaluation_report("random_forest")
-    print(report[:500] + "...")  # Pierwsze 500 znaków raportu
+    print(report[:500] + "...")  # First 500 characters of report

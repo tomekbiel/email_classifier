@@ -65,7 +65,7 @@ class Vectorizer:
             token_pattern=r'(?u)\b\w\w+\b'
         )
         
-        logging.info(f"Utworzono Count wektoryzator: max_features={max_features}, ngram_range={ngram_range}")
+        logging.info(f"Created Count vectorizer: max_features={max_features}, ngram_range={ngram_range}")
         return vectorizer
     
     def fit_transform_text(
@@ -75,23 +75,23 @@ class Vectorizer:
         vectorizer_type: str = "tfidf",
         **vectorizer_params
     ) -> np.ndarray:
-        """Dopasowuje i transformuje teksty na wektory"""
+        """Fit and transform texts to vectors"""
         
         if vectorizer_type == "tfidf":
             vectorizer = self.create_tfidf_vectorizer(**vectorizer_params)
         elif vectorizer_type == "count":
             vectorizer = self.create_count_vectorizer(**vectorizer_params)
         else:
-            raise ValueError(f"Nieobsługiwany typ wektoryzatora: {vectorizer_type}")
+            raise ValueError(f"Unsupported vectorizer type: {vectorizer_type}")
         
-        # Dopasuj i transformuj
+        # Fit and transform
         X = vectorizer.fit_transform(texts)
         
-        # Zapisz wektoryzator i nazwy cech
+        # Save vectorizer and feature names
         self.vectorizers[vectorizer_name] = vectorizer
         self.feature_names[vectorizer_name] = vectorizer.get_feature_names_out()
         
-        logging.info(f"Zwektoryzowano {len(texts)} tekstów, kształt: {X.shape}")
+        logging.info(f"Vectorized {len(texts)} texts, shape: {X.shape}")
         
         return X.toarray()
     
@@ -100,28 +100,28 @@ class Vectorizer:
         texts: List[str],
         vectorizer_name: str = "tfidf"
     ) -> np.ndarray:
-        """Transformuje teksty używając istniejącego wektoryzatora"""
+        """Transform texts using existing vectorizer"""
         
         if vectorizer_name not in self.vectorizers:
-            raise ValueError(f"Wektoryzator '{vectorizer_name}' nie został dopasowany")
+            raise ValueError(f"Vectorizer '{vectorizer_name}' has not been fitted")
         
         vectorizer = self.vectorizers[vectorizer_name]
         X = vectorizer.transform(texts)
         
-        logging.info(f"Transformowano {len(texts)} tekstów, kształt: {X.shape}")
+        logging.info(f"Transformed {len(texts)} texts, shape: {X.shape}")
         
         return X.toarray()
     
     def load_embeddings_model(self, model_name: str = "all-MiniLM-L6-v2") -> None:
-        """Ładuje model embeddings"""
+        """Load embeddings model"""
         if not SENTENCE_TRANSFORMERS_AVAILABLE:
-            raise ImportError("sentence-transformers nie jest zainstalowany")
+            raise ImportError("sentence-transformers is not installed")
         
         try:
             self.embeddings_model = SentenceTransformer(model_name)
-            logging.info(f"Załadowano model embeddings: {model_name}")
+            logging.info(f"Loaded embeddings model: {model_name}")
         except Exception as e:
-            logging.error(f"Błąd podczas ładowania modelu embeddings: {e}")
+            logging.error(f"Error loading embeddings model: {e}")
             raise
     
     def create_embeddings(
@@ -130,11 +130,11 @@ class Vectorizer:
         batch_size: int = 32,
         show_progress: bool = True
     ) -> np.ndarray:
-        """Tworzy embeddings dla tekstów"""
+        """Create embeddings for texts"""
         if self.embeddings_model is None:
             self.load_embeddings_model()
         
-        # Filtruj puste teksty
+        # Filter empty texts
         valid_texts = [text if text and text.strip() else "empty" for text in texts]
         
         embeddings = self.embeddings_model.encode(
@@ -144,7 +144,7 @@ class Vectorizer:
             convert_to_numpy=True
         )
         
-        logging.info(f"Utworzono embeddings dla {len(texts)} tekstów, kształt: {embeddings.shape}")
+        logging.info(f"Created embeddings for {len(texts)} texts, shape: {embeddings.shape}")
         
         return embeddings
     
@@ -154,16 +154,16 @@ class Vectorizer:
         n_components: int = 300,
         method: str = "svd"
     ) -> np.ndarray:
-        """Redukuje wymiarowość wektorów"""
+        """Reduce vector dimensions"""
         
         if method == "svd":
             reducer = TruncatedSVD(n_components=n_components, random_state=42)
         else:
-            raise ValueError(f"Nieobsługiwana metoda redukcji: {method}")
+            raise ValueError(f"Unsupported reduction method: {method}")
         
         X_reduced = reducer.fit_transform(X)
         
-        logging.info(f"Zredukowano wymiarowość z {X.shape[1]} do {n_components}")
+        logging.info(f"Reduced dimensionality from {X.shape[1]} to {n_components}")
         
         return X_reduced
     
@@ -172,17 +172,17 @@ class Vectorizer:
         features_list: List[np.ndarray],
         method: str = "concatenate"
     ) -> np.ndarray:
-        """Łączy różne reprezentacje cech"""
+        """Combine different feature representations"""
         
         if method == "concatenate":
             combined = np.concatenate(features_list, axis=1)
         elif method == "average":
-            # Uśrednij cechy (muszą mieć tę samą długość)
+            # Average features (must have same length)
             combined = np.mean(features_list, axis=0)
         else:
-            raise ValueError(f"Nieobsługiwana metoda łączenia: {method}")
+            raise ValueError(f"Unsupported combination method: {method}")
         
-        logging.info(f"Połączono {len(features_list)} reprezentacji cech, kształt wyniku: {combined.shape}")
+        logging.info(f"Combined {len(features_list)} feature representations, result shape: {combined.shape}")
         
         return combined
     
@@ -192,15 +192,15 @@ class Vectorizer:
         X: np.ndarray,
         top_k: int = 20
     ) -> Dict[str, float]:
-        """Zwraca najważniejsze cechy (średnie TF-IDF)"""
+        """Returns most important features (average TF-IDF)"""
         
         if vectorizer_name not in self.vectorizers:
-            raise ValueError(f"Wektoryzator '{vectorizer_name}' nie istnieje")
+            raise ValueError(f"Vectorizer '{vectorizer_name}' does not exist")
         
         feature_names = self.feature_names[vectorizer_name]
         mean_scores = np.mean(X, axis=0)
         
-        # Sortuj według ważności
+        # Sort by importance
         feature_scores = list(zip(feature_names, mean_scores))
         feature_scores.sort(key=lambda x: x[1], reverse=True)
         

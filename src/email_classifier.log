@@ -1,0 +1,30 @@
+2026-02-06 00:41:18,975 - INFO - Krok 1: Selekcja danych
+2026-02-06 00:41:18,988 - INFO - Krok 3: Czyszczenie tekstu
+2026-02-06 00:41:18,988 - INFO - Rozpoczynanie preprocessingu danych...
+2026-02-06 00:41:18,988 - INFO - Czyszczenie kolumny: Ticket Summary
+2026-02-06 00:41:18,989 - INFO - Czyszczenie kolumny: Interaction content
+2026-02-06 00:41:19,075 - INFO - Krok 4: Strukturyzacja danych
+2026-02-06 00:41:19,076 - INFO - Zakodowano y2: 3 klas
+2026-02-06 00:41:19,077 - INFO - Zakodowano y1: 1 klas
+2026-02-06 00:41:19,077 - INFO - Krok 5: Wektoryzacja tekstu
+2026-02-06 00:41:19,077 - INFO - Utworzono TF-IDF wektoryzator: max_features=10000, ngram_range=(1, 2)
+2026-02-06 00:41:19,082 - INFO - Utworzono TF-IDF wektoryzator: max_features=10000, ngram_range=(1, 2)
+2026-02-06 00:41:19,115 - INFO - Krok 6: Balansowanie danych
+2026-02-06 00:41:19,115 - INFO - Analiza niezbalansowania: ratio=3.78, klasy=3
+2026-02-06 00:41:19,115 - INFO - Analiza niezbalansowania: ratio=3.78
+2026-02-06 00:41:19,116 - INFO - Analiza niezbalansowania: ratio=3.78, klasy=3
+2026-02-06 00:41:19,120 - INFO - Random oversampling: 118 -> 204 próbek
+2026-02-06 00:41:19,120 - INFO - Zbalansowano dane: 118 -> 204
+2026-02-06 00:41:19,121 - INFO - Krok 7: Analiza strategii uczenia
+2026-02-06 00:41:19,135 - INFO - Rekomendowana strategia: supervised
+2026-02-06 00:41:19,139 - INFO - Basic split: 163 training, 41 test
+2026-02-06 00:41:19,139 - INFO - Data split: 163 training, 41 test
+2026-02-06 00:41:19,139 - INFO - Krok 9: Trenowanie i ewaluacja modeli
+2026-02-06 00:41:19,346 - INFO - Model random_forest trained successfully. Time: 0.16s, Accuracy: 1.0000
+2026-02-06 00:41:19,415 - INFO - Model logistic_regression trained successfully. Time: 0.06s, Accuracy: 0.9755
+2026-02-06 00:41:19,428 - INFO - Model naive_bayes trained successfully. Time: 0.00s, Accuracy: 0.8834
+2026-02-06 00:41:19,466 - INFO - Ewaluacja modelu random_forest: accuracy=0.9756, f1=0.9756
+2026-02-06 00:41:19,475 - INFO - Ewaluacja modelu logistic_regression: accuracy=0.9512, f1=0.9512
+2026-02-06 00:41:19,485 - INFO - Ewaluacja modelu naive_bayes: accuracy=0.8780, f1=0.8713
+2026-02-06 00:41:19,487 - INFO - Najlepszy model: random_forest (score: 0.9756)
+2026-02-06 00:41:19,487 - INFO - Pipeline completed successfully in 0.51 seconds

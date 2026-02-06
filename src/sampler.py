@@ -42,10 +42,10 @@ class Sampler:
             'majority_class': majority_class,
             'total_samples': total_samples,
             'num_classes': len(value_counts),
-            'is_balanced': imbalance_ratio <= 1.5  # Uważamy za zbalansowane jeśli ratio <= 1.5
+            'is_balanced': imbalance_ratio <= 1.5  # Consider balanced if ratio <= 1.5
         }
         
-        logging.info(f"Analiza niezbalansowania: ratio={imbalance_ratio:.2f}, klasy={len(value_counts)}")
+        logging.info(f"Imbalance analysis: ratio={imbalance_ratio:.2f}, classes={len(value_counts)}")
         
         return analysis
     
@@ -55,7 +55,7 @@ class Sampler:
         y: Union[pd.Series, np.ndarray],
         sampling_strategy: Union[str, float, Dict] = 'auto'
     ) -> Tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray]]:
-        """Losowy oversampling"""
+        """Random oversampling"""
         
         sampler = RandomOverSampler(
             sampling_strategy=sampling_strategy,
@@ -64,7 +64,7 @@ class Sampler:
         
         X_resampled, y_resampled = sampler.fit_resample(X, y)
         
-        logging.info(f"Random oversampling: {len(X)} -> {len(X_resampled)} próbek")
+        logging.info(f"Random oversampling: {len(X)} -> {len(X_resampled)} samples")
         
         return X_resampled, y_resampled
     
@@ -74,7 +74,7 @@ class Sampler:
         y: Union[pd.Series, np.ndarray],
         sampling_strategy: Union[str, float, Dict] = 'auto'
     ) -> Tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray]]:
-        """Losowy undersampling"""
+        """Random undersampling"""
         
         sampler = RandomUnderSampler(
             sampling_strategy=sampling_strategy,
@@ -83,7 +83,7 @@ class Sampler:
         
         X_resampled, y_resampled = sampler.fit_resample(X, y)
         
-        logging.info(f"Random undersampling: {len(X)} -> {len(X_resampled)} próbek")
+        logging.info(f"Random undersampling: {len(X)} -> {len(X_resampled)} samples")
         
         return X_resampled, y_resampled
     
@@ -125,7 +125,7 @@ class Sampler:
         
         X_resampled, y_resampled = sampler.fit_resample(X, y)
         
-        logging.info(f"ADASYN oversampling: {len(X)} -> {len(X_resampled)} próbek")
+        logging.info(f"ADASYN oversampling: {len(X)} -> {len(X_resampled)} samples")
         
         return X_resampled, y_resampled
     
@@ -146,7 +146,7 @@ class Sampler:
         
         X_resampled, y_resampled = sampler.fit_resample(X, y)
         
-        logging.info(f"NearMiss undersampling (v{version}): {len(X)} -> {len(X_resampled)} próbek")
+        logging.info(f"NearMiss undersampling (v{version}): {len(X)} -> {len(X_resampled)} samples")
         
         return X_resampled, y_resampled
     
@@ -161,7 +161,7 @@ class Sampler:
         
         X_resampled, y_resampled = sampler.fit_resample(X, y)
         
-        logging.info(f"Tomek Links undersampling: {len(X)} -> {len(X_resampled)} próbek")
+        logging.info(f"Tomek Links undersampling: {len(X)} -> {len(X_resampled)} samples")
         
         return X_resampled, y_resampled
     
@@ -180,7 +180,7 @@ class Sampler:
         
         X_resampled, y_resampled = sampler.fit_resample(X, y)
         
-        logging.info(f"SMOTE+Tomek: {len(X)} -> {len(X_resampled)} próbek")
+        logging.info(f"SMOTE+Tomek: {len(X)} -> {len(X_resampled)} samples")
         
         return X_resampled, y_resampled
     
@@ -199,7 +199,7 @@ class Sampler:
         
         X_resampled, y_resampled = sampler.fit_resample(X, y)
         
-        logging.info(f"SMOTE+ENN: {len(X)} -> {len(X_resampled)} próbek")
+        logging.info(f"SMOTE+ENN: {len(X)} -> {len(X_resampled)} samples")
         
         return X_resampled, y_resampled
     
@@ -241,7 +241,7 @@ class Sampler:
                         random_state=self.random_state
                     )
                 else:
-                    resampled_df = class_df  # Nie robimy nic jeśli nie oversample
+                    resampled_df = class_df  # Do nothing if not oversample
             elif current_count > target_samples_per_class:
                 # Undersampling
                 resampled_df = resample(
@@ -255,14 +255,14 @@ class Sampler:
             
             balanced_dfs.append(resampled_df)
         
-        # Połącz wszystkie zbalansowane klasy
+        # Combine all balanced classes
         balanced_df = pd.concat(balanced_dfs, ignore_index=True)
         
-        # Podziel z powrotem na X i y
+        # Split back to X and y
         y_resampled = balanced_df['target']
         X_resampled = balanced_df.drop('target', axis=1)
         
-        logging.info(f"Custom balanced sampling: {len(X)} -> {len(X_resampled)} próbek")
+        logging.info(f"Custom balanced sampling: {len(X)} -> {len(X_resampled)} samples")
         
         return X_resampled, y_resampled
     
@@ -273,24 +273,24 @@ class Sampler:
         max_ratio: float = 2.0,
         prefer_oversampling: bool = True
     ) -> Tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray]]:
-        """Automatyczne balansowanie na podstawie analizy"""
+        """Automatic balancing based on analysis"""
         
         analysis = self.analyze_imbalance(y)
         
         if analysis['is_balanced']:
-            logging.info("Dane są już zbalansowane")
+            logging.info("Data is already balanced")
             return X, y
         
         if analysis['num_classes'] == 2:
-            # Binary classification
+            # Binary classification - use RandomOverSampler instead of SMOTE
             if prefer_oversampling:
-                return self.smote_oversample(X, y)
+                return self.random_oversample(X, y)
             else:
                 return self.random_undersample(X, y)
         else:
-            # Multi-class
+            # Multi-class - use RandomOverSampler instead of SMOTE
             if prefer_oversampling:
-                return self.smote_oversample(X, y)
+                return self.random_oversample(X, y)
             else:
                 return self.nearmiss_undersample(X, y)
     

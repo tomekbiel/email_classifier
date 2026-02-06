@@ -28,19 +28,19 @@ class DataStructurer:
                     'class_balance': self._calculate_balance_score(value_counts)
                 }
                 
-                logging.info(f"Kolumna {col}: {len(value_counts)} klas, balans: {distributions[col]['class_balance']:.3f}")
+                logging.info(f"Column {col}: {len(value_counts)} classes, balance: {distributions[col]['class_balance']:.3f}")
         
         return distributions
     
     def _calculate_balance_score(self, value_counts: pd.Series) -> float:
-        """Oblicza wynik balansu klas (0 = idealnie zbalansowany, 1 = ekstremalnie niezbalansowany)"""
+        """Calculate class balance score (0 = perfectly balanced, 1 = extremely imbalanced)"""
         if len(value_counts) <= 1:
             return 0.0
             
-        # Normalizacja counts
+        # Normalize counts
         normalized = value_counts / value_counts.sum()
         
-        # Oblicz odchylenie standardowe od idealnej dystrybucji
+        # Calculate standard deviation from ideal distribution
         ideal_distribution = 1 / len(value_counts)
         variance = ((normalized - ideal_distribution) ** 2).sum()
         
@@ -53,23 +53,23 @@ class DataStructurer:
         secondary_col: Optional[str] = None,
         tertiary_col: Optional[str] = None
     ) -> pd.DataFrame:
-        """Tworzy hierarchiczne etykiety"""
+        """Create hierarchical labels"""
         result_df = df.copy()
         
-        # Podstawowa etykieta
+        # Primary label
         if primary_col in df.columns:
             result_df['primary_label'] = df[primary_col]
         
-        # Drugorzędna etykieta
+        # Secondary label
         if secondary_col and secondary_col in df.columns:
             result_df['secondary_label'] = df[secondary_col]
-            # Połącz etykiety
+            # Combine labels
             result_df['hierarchical_label'] = (
                 result_df['primary_label'].astype(str) + '_' + 
                 result_df['secondary_label'].astype(str)
             )
         
-        # Trzeciorzędna etykieta
+        # Tertiary label
         if tertiary_col and tertiary_col in df.columns:
             result_df['tertiary_label'] = df[tertiary_col]
             if 'hierarchical_label' in result_df.columns:
@@ -86,12 +86,12 @@ class DataStructurer:
         label_columns: List[str],
         fit_transform: bool = True
     ) -> pd.DataFrame:
-        """Koduje etykiety kategoryczne"""
+        """Encode categorical labels"""
         result_df = df.copy()
         
         for col in label_columns:
             if col not in df.columns:
-                logging.warning(f"Kolumna '{col}' nie istnieje w DataFrame")
+                logging.warning(f"Column '{col}' does not exist in DataFrame")
                 continue
                 
             if col not in self.label_encoders:
@@ -100,19 +100,19 @@ class DataStructurer:
             encoder = self.label_encoders[col]
             
             if fit_transform:
-                # Dopasuj i transformuj
+                # Fit and transform
                 encoded_labels = encoder.fit_transform(df[col].astype(str))
             else:
-                # Tylko transformuj (dla danych testowych)
+                # Transform only (for test data)
                 encoded_labels = encoder.transform(df[col].astype(str))
             
-            # Zapisz mapowanie
+            # Save mapping
             self.class_mappings[col] = dict(zip(encoder.classes_, encoder.transform(encoder.classes_)))
             
-            # Dodaj zakodowaną kolumnę
+            # Add encoded column
             result_df[f'{col}_encoded'] = encoded_labels
             
-            logging.info(f"Zakodowano {col}: {len(encoder.classes_)} klas")
+            logging.info(f"Encoded {col}: {len(encoder.classes_)} classes")
         
         return result_df
     
@@ -121,13 +121,13 @@ class DataStructurer:
         df: pd.DataFrame, 
         label_columns: List[str]
     ) -> Tuple[np.ndarray, List[str]]:
-        """Tworzy strukturę multi-label"""
+        """Create multi-label structure"""
         valid_columns = [col for col in label_columns if col in df.columns]
         
         if not valid_columns:
-            raise ValueError("Brak prawidłowych kolumn etykiet")
+            raise ValueError("No valid label columns found")
         
-        # Połącz wszystkie etykiety w jedną macierz
+        # Combine all labels into one matrix
         label_matrix = []
         for col in valid_columns:
             encoded = self.label_encoders.get(col, LabelEncoder()).fit_transform(df[col].astype(str))
